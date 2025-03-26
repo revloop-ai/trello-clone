@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
+import { trackServerEvent } from "@/lib/posthog";
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -18,6 +19,9 @@ export async function POST(req: Request) {
       process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (error) {
+    await trackServerEvent("stripe_webhook_error", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return new NextResponse("Webhook error", { status: 400 });
   }
 
@@ -29,6 +33,9 @@ export async function POST(req: Request) {
     );
 
     if (!session?.metadata?.orgId) {
+      await trackServerEvent("stripe_webhook_missing_org_id", {
+        sessionId: session.id,
+      });
       return new NextResponse("Org ID is required", { status: 400 });
     }
 
@@ -42,6 +49,12 @@ export async function POST(req: Request) {
           subscription.current_period_end * 1000
         ),
       },
+    });
+
+    await trackServerEvent("stripe_subscription_created", {
+      orgId: session?.metadata?.orgId,
+      subscriptionId: subscription.id,
+      priceId: subscription.items.data[0].price.id,
     });
   }
 
@@ -60,6 +73,11 @@ export async function POST(req: Request) {
           subscription.current_period_end * 1000
         ),
       },
+    });
+
+    await trackServerEvent("stripe_payment_succeeded", {
+      subscriptionId: subscription.id,
+      priceId: subscription.items.data[0].price.id,
     });
   }
 

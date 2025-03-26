@@ -18,6 +18,10 @@ const handler = async (data: InputType): Promise<ReturnType> => {
   const { userId, orgId } = auth();
   const user = await currentUser();
 
+  console.log("userId", userId);
+  console.log("orgId", orgId);
+  console.log("user", user);
+
   if (!userId || !orgId || !user) {
     return {
       error: "Unauthorized",
@@ -73,7 +77,8 @@ const handler = async (data: InputType): Promise<ReturnType> => {
 
       url = stripeSession.url || "";
     }
-  } catch {
+  } catch (error) {
+    console.log("[STRIPE_ERROR]", error);
     return {
       error: "Something went wrong!",
     };
