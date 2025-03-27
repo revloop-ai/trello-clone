@@ -11,8 +11,7 @@ export const PostHogIdentify = () => {
     if (isLoaded && user) {
       posthog.identify(user.id, {
         email: user.emailAddresses[0]?.emailAddress,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        ...user,
         $set_once: {
           first_seen: new Date().toISOString(),
         },
