@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { clerkClient } from "@clerk/nextjs";
 
 import { db } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
@@ -51,6 +52,17 @@ export async function POST(req: Request) {
       },
     });
 
+    // Update Clerk user metadata with Stripe information
+    if (session?.metadata?.userId) {
+      await clerkClient.users.updateUser(session.metadata.userId, {
+        publicMetadata: {
+          stripeCustomerId: subscription.customer as string,
+          stripeSubscriptionId: subscription.id,
+          stripePriceId: subscription.items.data[0].price.id,
+        },
+      });
+    }
+
     await trackServerEvent("stripe_subscription_created", {
       orgId: session?.metadata?.orgId,
       subscriptionId: subscription.id,
@@ -74,6 +86,16 @@ export async function POST(req: Request) {
         ),
       },
     });
+
+    // Update Clerk user metadata with updated Stripe information
+    if (session?.metadata?.userId) {
+      await clerkClient.users.updateUser(session.metadata.userId, {
+        publicMetadata: {
+          stripeSubscriptionId: subscription.id,
+          stripePriceId: subscription.items.data[0].price.id,
+        },
+      });
+    }
 
     await trackServerEvent("stripe_payment_succeeded", {
       subscriptionId: subscription.id,

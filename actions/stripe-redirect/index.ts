@@ -72,6 +72,7 @@ const handler = async (data: InputType): Promise<ReturnType> => {
         ],
         metadata: {
           orgId,
+          userId,
         },
       });
 
