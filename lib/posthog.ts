@@ -1,7 +1,7 @@
 import { PostHog } from "posthog-node";
 
 const posthog = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
-  host: "https://app.posthog.com",
+  host: "https://eu.i.posthog.com",
 });
 
 export const identifyUser = async (
